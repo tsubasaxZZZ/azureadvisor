@@ -5,12 +5,41 @@ import (
 	"fmt"
 )
 
-func getVM(client *Client, subscriptionID string) (ResourceGraphResponse, string, error) {
+type VM struct {
+	ID            string       `json:"id"`
+	ResourceGroup string       `json:"resourceGroup"`
+	Name          string       `json:"name"`
+	Location      string       `json:"location"`
+	Properties    VMProperties `json:"properties"`
+	Zones         []string     `json:"zones"`
+}
+
+type VMProperties struct {
+	StorageProfile struct {
+		DataDisks DataDisks `json:"dataDisks"`
+		OSDisk    OSDisk    `json:"osDisk"`
+	} `json:"storageProfile"`
+}
+type DataDisks []struct {
+	Name        string `json:"name"`
+	DiskSizeGB  int    `json:"diskSizeGB"`
+	ManagedDisk struct {
+		ID string `json:"id"`
+	}
+}
+type OSDisk struct {
+	Name        string `json:"name"`
+	ManagedDisk struct {
+		ID string `json:"id"`
+	}
+}
+
+func getVM(client *Client, subscriptionID string) (*[]VM, error) {
 	project := []ResourceGraphQueryProject{
 		{columnName: "id", queryProperty: "id"},
 		{columnName: "resourceGroup", queryProperty: "resourceGroup"},
 		{columnName: "name", queryProperty: "name"},
-		{columnName: "type", queryProperty: "type"},
+		{columnName: "properties", queryProperty: "properties"},
 	}
 
 	qr := buildQueryRequest(
@@ -18,15 +47,17 @@ func getVM(client *Client, subscriptionID string) (ResourceGraphResponse, string
 		subscriptionID,
 		project,
 	)
-	r, err := FetchResourceGraphData(context.TODO(), client, qr)
+
+	r, err := FetchResourceGraphData(context.TODO(), client, qr, &VM{})
 	if err != nil {
 		fmt.Println(qr.query)
-		return nil, "", err
+		return nil, err
+	}
+	var result []VM
+	for _, d := range r {
+		vm := *d.(*VM)
+		result = append(result, vm)
 	}
 
-	stdout, err2 := buildStringResourceGraphResult(r, project)
-	if err2 != nil {
-		return nil, "", err2
-	}
-	return r, stdout, nil
+	return &result, nil
 }

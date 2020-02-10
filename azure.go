@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"errors"
+	"encoding/json"
 	"fmt"
 	"reflect"
 	"strings"
@@ -37,7 +37,7 @@ type FetchMetricDefinitionsInput struct {
 	metricnamespace string
 }
 
-type QueryRequestInput struct {
+type ResourceGraphQueryRequestInput struct {
 	subscriptionID string
 	query          string
 	facets         []string
@@ -197,7 +197,7 @@ func FetchMetricData(ctx context.Context, c *Client, params FetchMetricDataInput
 	return metricsList, nil
 }
 
-func FetchResourceGraphData(c context.Context, client *Client, params QueryRequestInput) (ResourceGraphResponse, error) {
+func FetchResourceGraphData(c context.Context, client *Client, params ResourceGraphQueryRequestInput, v interface{}) ([]interface{}, error) {
 	var facetRequest []resourcegraph.FacetRequest
 	for i := 0; i < len(params.facets); i++ {
 		facetRequest = append(
@@ -217,28 +217,19 @@ func FetchResourceGraphData(c context.Context, client *Client, params QueryReque
 	if err != nil {
 		return nil, err
 	}
-	result := make(map[string]interface{})
+
+	var result []interface{}
 	for _, elem := range queryResponse.Data.([]interface{}) {
-		ve := reflect.ValueOf(elem)
-		mi := ve.MapIndex(reflect.ValueOf("id"))
-		// リソース ID は必須とする
-		if !mi.IsValid() {
-			return nil, errors.New("id property cannot find in result")
+		b, err := json.Marshal(elem)
+		if err != nil {
+			return nil, err
 		}
-		result[mi.Interface().(string)] = elem
-	}
-	for _, elem := range *queryResponse.Facets {
-		//fmt.Println(elem.AsFacet())
-
-		facetError, err := elem.AsFacetError()
-		if err {
-			for _, e := range *facetError.Errors {
-				fmt.Println(*e.Message)
-			}
+		r := reflect.New(reflect.TypeOf(v).Elem()).Interface()
+		errUnmarshal := json.Unmarshal(b, &r)
+		if errUnmarshal != nil {
+			return nil, errUnmarshal
 		}
-
-		//fmt.Println(elem.AsFacetResult())
-
+		result = append(result, r)
 	}
 	return result, nil
 }

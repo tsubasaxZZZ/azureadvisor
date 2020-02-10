@@ -33,7 +33,7 @@ type ResourceGraphQueryProject struct {
 
 type ResourceGraphResponse map[string]interface{}
 
-func buildQueryRequest(baseQuery string, subscriptionID string, project []ResourceGraphQueryProject) QueryRequestInput {
+func buildQueryRequest(baseQuery string, subscriptionID string, project []ResourceGraphQueryProject) ResourceGraphQueryRequestInput {
 	q := baseQuery
 
 	// project の組み立て
@@ -43,24 +43,8 @@ func buildQueryRequest(baseQuery string, subscriptionID string, project []Resour
 	}
 	q = strings.TrimRight(q, ",")
 
-	return QueryRequestInput{
+	return ResourceGraphQueryRequestInput{
 		subscriptionID: subscriptionID,
 		query:          q,
 	}
-}
-
-func buildStringResourceGraphResult(response ResourceGraphResponse, project []ResourceGraphQueryProject) (string, error) {
-	var stdout string
-	for _, v := range response {
-		var result string
-		for _, p := range project {
-			result += fmt.Sprint(
-				v.(map[string]interface{})[p.columnName],
-				",",
-			)
-		}
-		result = strings.TrimRight(result, ",")
-		stdout += fmt.Sprintf("%s\n", result)
-	}
-	return stdout, nil
 }

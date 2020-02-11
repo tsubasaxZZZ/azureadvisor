@@ -26,17 +26,18 @@ type VMProperties struct {
 	} `json:"hardwareProfile"`
 }
 type DataDisks []struct {
-	Name        string `json:"name"`
-	DiskSizeGB  int    `json:"diskSizeGB"`
-	ManagedDisk struct {
+	Name         string `json:"name"`
+	CreateOption string `json:"createOption"`
+	Lun          int    `json:"lun"`
+	ManagedDisk  struct {
 		ID string `json:"id"`
-	}
+	} `json:"managedDisk"`
 }
 type OSDisk struct {
 	Name        string `json:"name"`
 	ManagedDisk struct {
 		ID string `json:"id"`
-	}
+	} `json:"managedDisk"`
 }
 
 type RunningVM struct {

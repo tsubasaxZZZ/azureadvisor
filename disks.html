@@ -1,0 +1,53 @@
+<html>
+
+<body>
+    <h2>Unattached Disks</h2>
+    <table border=1>
+        <tr>
+            <th>Resource Group</th>
+            <th>Location</th>
+            <th>Name</th>
+            <th>SkuName</th>
+            <th>DiskSizeGB</th>
+            <th>DiskState</th>
+            <th>TimeCreated</th>
+        </tr>
+        {{range $i,$v := .UnattachedDisks}}
+        <tr>
+            <td>{{$v.ResourceGroup}}</td>
+            <td>{{$v.Location}}</td>
+            <td>{{$v.Name}}</td>
+            <td>{{$v.Sku.Name}}</td>
+            <td>{{$v.Properties.DiskSizeGB}}</td>
+            <td>{{$v.Properties.DiskState}}</td>
+            <td>{{$v.Properties.TimeCreated}}</td>
+        </tr>
+        {{end}}
+    </table>
+
+    <h2>Unused VM's Disks</h2>
+    <table border=1>
+        <tr>
+            <th>Resource Group</th>
+            <th>Location</th>
+            <th>Name</th>
+            <th>SkuName</th>
+            <th>DiskSizeGB</th>
+            <th>DiskState</th>
+            <th>TimeCreated</th>
+        </tr>
+        {{range $i,$v := .UnusedVMDisks}}
+        <tr>
+            <td>{{$v.ResourceGroup}}</td>
+            <td>{{$v.Location}}</td>
+            <td>{{$v.Name}}</td>
+            <td>{{$v.Sku.Name}}</td>
+            <td>{{$v.Properties.DiskSizeGB}}</td>
+            <td>{{$v.Properties.DiskState}}</td>
+            <td>{{$v.Properties.TimeCreated}}</td>
+        </tr>
+        {{end}}
+    </table>
+</body>
+
+</html>

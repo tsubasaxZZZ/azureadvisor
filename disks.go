@@ -38,14 +38,14 @@ func CheckDisk(c *cli.Context) error {
 	if err != nil {
 		return err
 	}
+	fmt.Println("-------------------  getUnattachedDisks -----------------------")
 	disks, err2 := getUnattachedDisks(client, client.SubscriptionID)
 	if err2 != nil {
 		return err2
 	}
-	fmt.Println("-------------------  getUnattachedDisks -----------------------")
-	for _, d := range *disks {
-		fmt.Printf("%s,%s,%s,%s,%d,%s,%s\n", d.ResourceGroup, d.Name, d.Sku.Name, d.Location, d.Properties.DiskSizeGB, d.Properties.DiskState, d.Properties.TimeCreated)
-	}
+	//for _, d := range *disks {
+	//fmt.Printf("%s,%s,%s,%s,%d,%s,%s\n", d.ResourceGroup, d.Name, d.Sku.Name, d.Location, d.Properties.DiskSizeGB, d.Properties.DiskState, d.Properties.TimeCreated)
+	//}
 	fmt.Println("---------------------------------------------------------------")
 
 	fmt.Println("-------------------  getUnusedVMDisks -----------------------")
@@ -53,11 +53,15 @@ func CheckDisk(c *cli.Context) error {
 	if err3 != nil {
 		return err3
 	}
-	for _, d := range *disks2 {
-		fmt.Printf("%s,%s,%d\n", d.ID, d.Name, d.Properties.DiskSizeGB)
-	}
+	//for _, d := range *disks2 {
+	//fmt.Printf("%s,%s,%d\n", d.ID, d.Name, d.Properties.DiskSizeGB)
+	//}
 	fmt.Println("---------------------------------------------------------------")
 
+	m := map[string][]Disk{}
+	m["UnattachedDisks"] = *disks
+	m["UnusedVMDisks"] = *disks2
+	outputToHTML(m, "result_disks.html", "disks.html")
 	return nil
 }
 
@@ -79,6 +83,7 @@ func getUnattachedDisks(client *Client, subscriptionID string) (*[]Disk, error) 
 		client.SubscriptionID,
 		project,
 	)
+	fmt.Printf("Query:%s\n", qr.query)
 	dl, err := FetchResourceGraphData(context.TODO(), client, qr, &Disk{})
 	if err != nil {
 		return nil, err
@@ -170,6 +175,7 @@ func getUnusedVMDisks(client *Client, subscriptionID string) (*[]Disk, error) {
 		OSDisk    OSDisk    `json:"osDisk"`
 		DataDisks DataDisks `json:"dataDisks"`
 	}
+
 	r, errFetchGraphData := FetchResourceGraphData(context.TODO(), client, qr, &unusedVMIDs{})
 	if errFetchGraphData != nil {
 		fmt.Println(qr.query)
@@ -180,6 +186,7 @@ func getUnusedVMDisks(client *Client, subscriptionID string) (*[]Disk, error) {
 
 	for _, v := range r {
 		vm := *v.(*unusedVMIDs)
+
 		unusedManagedDisksID = append(unusedManagedDisksID, vm.OSDisk.ManagedDisk.ID)
 		for _, d := range vm.DataDisks {
 			unusedManagedDisksID = append(unusedManagedDisksID, d.ManagedDisk.ID)
@@ -195,6 +202,7 @@ func getUnusedVMDisks(client *Client, subscriptionID string) (*[]Disk, error) {
 		{columnName: "name", queryProperty: "name"},
 		{columnName: "sku", queryProperty: "sku"},
 		{columnName: "properties", queryProperty: "properties"},
+		{columnName: "location", queryProperty: "location"},
 	}
 
 	var result []Disk
@@ -203,9 +211,10 @@ func getUnusedVMDisks(client *Client, subscriptionID string) (*[]Disk, error) {
 	var wg2 sync.WaitGroup
 	s2 := semaphore.NewWeighted(QUERY_CONCURRENCY)
 
-	// 一度に大量のクエリをすると制限があるためクエリの最大値を決める
+	// 一度に大量のクエリをすると制限があるため1クエリ当たりのディスク数の最大値を決める
 	const QUERYNUM = 10
-	for i := 0; i < int(math.Ceil(float64(len(unusedManagedDisksID))/float64(QUERYNUM))); i++ {
+	loopCnt := int(math.Ceil(float64(len(unusedManagedDisksID)) / float64(QUERYNUM)))
+	for i := 0; i < loopCnt; i++ {
 		wg2.Add(1)
 		s2.Acquire(context.Background(), 1)
 
@@ -225,6 +234,7 @@ func getUnusedVMDisks(client *Client, subscriptionID string) (*[]Disk, error) {
 			diskProject,
 		)
 
+		fmt.Printf("Query disk processing: %d/%d\n", i+1, loopCnt)
 		go func() error {
 			defer s2.Release(1)
 			defer wg2.Done()

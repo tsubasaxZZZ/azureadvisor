@@ -26,6 +26,12 @@ func main() {
 			Action: CheckVM,
 		},
 	}
+	app.Flags = []cli.Flag{
+		&cli.StringFlag{
+			Name:     "subscriptionID",
+			Required: true,
+		},
+	}
 	if err := app.Run(os.Args); err != nil {
 		log.Fatal(err)
 	}

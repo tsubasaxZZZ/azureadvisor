@@ -31,12 +31,11 @@ type Disk struct {
 }
 
 func CheckDisk(c *cli.Context) error {
-	s := "573d2a67-3e39-4f27-880e-5dd6bde361e1"
-	client, err := NewClient(s)
+	client, err := NewClient(c.String("subscriptionID"))
 	if err != nil {
 		return err
 	}
-	disks, err2 := getUnattachedDisks(client, s)
+	disks, err2 := getUnattachedDisks(client, client.SubscriptionID)
 	if err2 != nil {
 		return err2
 	}
@@ -47,7 +46,7 @@ func CheckDisk(c *cli.Context) error {
 	fmt.Println("---------------------------------------------------------------")
 
 	fmt.Println("-------------------  getUnusedVMDisks -----------------------")
-	disks2, err3 := getUnusedVMDisks(client, s)
+	disks2, err3 := getUnusedVMDisks(client, client.SubscriptionID)
 	if err3 != nil {
 		return err3
 	}
@@ -74,7 +73,7 @@ func getUnattachedDisks(client *Client, subscriptionID string) (*[]Disk, error) 
 
 	qr := buildQueryRequest(
 		`resources | extend disk_tags =  bag_keys(tags) | extend disk_tags_string = tostring(disk_tags) | where type == "microsoft.compute/disks" | where properties.diskState == "Unattached" | where disk_tags_string !contains_cs "ASR-ReplicaDisk"`,
-		subscriptionID,
+		client.SubscriptionID,
 		project,
 	)
 	dl, err := FetchResourceGraphData(context.TODO(), client, qr, &Disk{})

@@ -45,6 +45,7 @@ type ResourceGraphQueryRequestInput struct {
 
 // Client is an API Client for Azure
 type Client struct {
+	SubscriptionID          string
 	MetricsClient           insightsapi.MetricsClientAPI
 	MetricDefinitionsClient insightsapi.MetricDefinitionsClientAPI
 	ResourceGraphClient     resourcegraph.OperationsClient
@@ -67,6 +68,7 @@ func NewClient(subscriptionID string) (*Client, error) {
 	resourceGraphClient.Authorizer = a
 
 	return &Client{
+		SubscriptionID:          subscriptionID,
 		MetricsClient:           metricsClient,
 		MetricDefinitionsClient: metricDefinitionsClient,
 		ResourceGraphClient:     resourceGraphClient,

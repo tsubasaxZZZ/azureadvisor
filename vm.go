@@ -45,13 +45,12 @@ type RunningVM struct {
 }
 
 func CheckVM(c *cli.Context) error {
-	s := "573d2a67-3e39-4f27-880e-5dd6bde361e1"
-	client, err := NewClient(s)
+	client, err := NewClient(c.String("subscriptionID"))
 	if err != nil {
 		return err
 	}
 	fmt.Println("-------------------  getRunningVM -----------------------")
-	vms, err4 := getRunningVM(client, s)
+	vms, err4 := getRunningVM(client, client.SubscriptionID)
 	if err4 != nil {
 		return err4
 	}

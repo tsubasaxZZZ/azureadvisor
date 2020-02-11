@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"math"
 	"strings"
 	"sync"
 
@@ -85,8 +86,6 @@ func getUnattachedDisks(client *Client, subscriptionID string) (*[]Disk, error) 
 	var result []Disk
 	for _, d := range dl {
 		result = append(result, *d.(*Disk))
-		//disk := d.(*Disk)
-		//		fmt.Printf("%s,%s,%s,%s,%s,%d,%s,%s\n", disk.ID, disk.ResourceGroup, disk.Name, disk.SkuName, disk.Location, disk.DiskSizeGB, disk.DiskState, disk.TimeCreated)
 	}
 
 	return &result, nil
@@ -108,7 +107,7 @@ func getUnusedVMDisks(client *Client, subscriptionID string) (*[]Disk, error) {
 
 	var wg sync.WaitGroup
 
-	s := semaphore.NewWeighted(20)
+	s := semaphore.NewWeighted(QUERY_CONCURRENCY)
 	for _, elem := range *vms {
 		wg.Add(1)
 		s.Acquire(context.Background(), 1)
@@ -150,8 +149,6 @@ func getUnusedVMDisks(client *Client, subscriptionID string) (*[]Disk, error) {
 
 	wg.Wait()
 
-	fmt.Println(unusedVMID)
-
 	// --------------------------------------------
 	// 使用していない VM の 管理ディスクのID一覧を取得
 	// --------------------------------------------
@@ -192,7 +189,6 @@ func getUnusedVMDisks(client *Client, subscriptionID string) (*[]Disk, error) {
 	// ---------------------------------------------
 	// 管理ディスクをクエリ
 	// ---------------------------------------------
-	// TODO: 並列で取得
 	diskProject := []ResourceGraphQueryProject{
 		{columnName: "id", queryProperty: "id"},
 		{columnName: "resourceGroup", queryProperty: "resourceGroup"},
@@ -201,24 +197,51 @@ func getUnusedVMDisks(client *Client, subscriptionID string) (*[]Disk, error) {
 		{columnName: "properties", queryProperty: "properties"},
 	}
 
-	queryMD := strings.ReplaceAll(strings.Join(unusedManagedDisksID, `,`), `,`, `","`)
-
-	qrMD := buildQueryRequest(
-		`resources | where id in~("`+queryMD+`")`,
-		subscriptionID,
-		diskProject,
-	)
-
-	r2, errFetchMDGraphData := FetchResourceGraphData(context.TODO(), client, qrMD, &Disk{})
-	if errFetchMDGraphData != nil {
-		fmt.Println(qr.query)
-		return nil, cli.NewExitError(fmt.Sprintf("fetch resource graph data failed: %s", errFetchMDGraphData.Error()), UNKNOWN)
-	}
-
 	var result []Disk
-	for _, d := range r2 {
-		result = append(result, *d.(*Disk))
-	}
 
+	mutex2 := &sync.Mutex{}
+	var wg2 sync.WaitGroup
+	s2 := semaphore.NewWeighted(QUERY_CONCURRENCY)
+
+	// 一度に大量のクエリをすると制限があるためクエリの最大値を決める
+	const QUERYNUM = 10
+	for i := 0; i < int(math.Ceil(float64(len(unusedManagedDisksID))/float64(QUERYNUM))); i++ {
+		wg2.Add(1)
+		s2.Acquire(context.Background(), 1)
+
+		_tmp := unusedManagedDisksID[i*QUERYNUM : i*QUERYNUM+QUERYNUM]
+		targetID := []string{}
+		for _, v := range _tmp {
+			if v != "" {
+				targetID = append(targetID, v)
+			}
+		}
+
+		queryMD := strings.ReplaceAll(strings.Join(targetID, `,`), `,`, `","`)
+
+		qrMD := buildQueryRequest(
+			`resources | where id in~("`+queryMD+`")`,
+			subscriptionID,
+			diskProject,
+		)
+
+		go func() error {
+			defer s2.Release(1)
+			defer wg2.Done()
+			r2, errFetchMDGraphData := FetchResourceGraphData(context.TODO(), client, qrMD, &Disk{})
+			if errFetchMDGraphData != nil {
+				fmt.Println(qr.query)
+				return cli.NewExitError(fmt.Sprintf("fetch resource graph data failed: %s", errFetchMDGraphData.Error()), UNKNOWN)
+			}
+
+			mutex2.Lock()
+			for _, d := range r2 {
+				result = append(result, *d.(*Disk))
+			}
+			mutex2.Unlock()
+			return nil
+		}()
+	}
+	wg2.Wait()
 	return &result, nil
 }

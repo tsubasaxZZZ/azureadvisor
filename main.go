@@ -9,6 +9,10 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
+const (
+	QUERY_CONCURRENCY = 10
+)
+
 func main() {
 	app := &cli.App{
 		Name:  "advisor",

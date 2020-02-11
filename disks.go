@@ -22,7 +22,7 @@ type Disk struct {
 	Location      string `json:"location"`
 	Sku           struct {
 		Name string `json:"name"`
-	} `json:"Sku"`
+	} `json:"sku"`
 	Properties struct {
 		DiskSizeGB  int    `json:"diskSizeGB"`
 		TimeCreated string `json:"timeCreated"`
@@ -42,7 +42,7 @@ func CheckDisk(c *cli.Context) error {
 	}
 	fmt.Println("-------------------  getUnattachedDisks -----------------------")
 	for _, d := range *disks {
-		fmt.Printf("%s,%s,%d\n", d.ID, d.Name, d.Properties.DiskSizeGB)
+		fmt.Printf("%s,%s,%s,%s,%d,%s,%s\n", d.ResourceGroup, d.Name, d.Sku.Name, d.Location, d.Properties.DiskSizeGB, d.Properties.DiskState, d.Properties.TimeCreated)
 	}
 	fmt.Println("---------------------------------------------------------------")
 
@@ -55,6 +55,7 @@ func CheckDisk(c *cli.Context) error {
 		fmt.Printf("%s,%s,%d\n", d.ID, d.Name, d.Properties.DiskSizeGB)
 	}
 	fmt.Println("---------------------------------------------------------------")
+
 	return nil
 }
 
@@ -63,11 +64,11 @@ func getUnattachedDisks(client *Client, subscriptionID string) (*[]Disk, error) 
 		{columnName: "id", queryProperty: "id"},
 		{columnName: "resourceGroup", queryProperty: "resourceGroup"},
 		{columnName: "name", queryProperty: "name"},
-		{columnName: "skuName", queryProperty: "sku.name"},
+		{columnName: "sku", queryProperty: "sku"},
 		{columnName: "location", queryProperty: "location"},
-		{columnName: "diskSizeGB", queryProperty: "toint(properties.diskSizeGB)"},
-		{columnName: "diskState", queryProperty: "tostring(properties.diskState)"},
-		{columnName: "timeCreated", queryProperty: "properties.timeCreated"},
+		//{columnName: "diskSizeGB", queryProperty: "toint(properties.diskSizeGB)"},
+		//{columnName: "diskState", queryProperty: "tostring(properties.diskState)"},
+		//{columnName: "timeCreated", queryProperty: "properties.timeCreated"},
 		{columnName: "properties", queryProperty: "properties"},
 	}
 
@@ -122,6 +123,7 @@ func getUnusedVMDisks(client *Client, subscriptionID string) (*[]Disk, error) {
 		if len(metricsList["Percentage CPU"]) == 0 {
 			unusedVMID = append(unusedVMID, elem.ID)
 		}
+		// テスト用
 		//unusedVMID = append(unusedVMID, elem.ID)
 
 	}

@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
+
+	"github.com/urfave/cli/v2"
 )
 
 type VM struct {
@@ -19,6 +21,9 @@ type VMProperties struct {
 		DataDisks DataDisks `json:"dataDisks"`
 		OSDisk    OSDisk    `json:"osDisk"`
 	} `json:"storageProfile"`
+	HardwareProfile struct {
+		VMSize string `json:"vmSize"`
+	} `json:"hardwareProfile"`
 }
 type DataDisks []struct {
 	Name        string `json:"name"`
@@ -32,6 +37,30 @@ type OSDisk struct {
 	ManagedDisk struct {
 		ID string `json:"id"`
 	}
+}
+
+type RunningVM struct {
+	VM                    VM
+	PercentageCPUPerMonth float64
+}
+
+func CheckVM(c *cli.Context) error {
+	s := "573d2a67-3e39-4f27-880e-5dd6bde361e1"
+	client, err := NewClient(s)
+	if err != nil {
+		return err
+	}
+	fmt.Println("-------------------  getRunningVM -----------------------")
+	vms, err4 := getRunningVM(client, s)
+	if err4 != nil {
+		return err4
+	}
+	for _, v := range *vms {
+		fmt.Printf("%s,%s,%s,%s,%f\n", v.VM.ID, v.VM.Name, v.VM.ResourceGroup, v.VM.Properties.HardwareProfile.VMSize, v.PercentageCPUPerMonth)
+	}
+	fmt.Println("---------------------------------------------------------------")
+
+	return nil
 }
 
 func getVM(client *Client, subscriptionID string) (*[]VM, error) {
@@ -60,4 +89,52 @@ func getVM(client *Client, subscriptionID string) (*[]VM, error) {
 	}
 
 	return &result, nil
+}
+
+func getRunningVM(client *Client, subscriptionID string) (*[]RunningVM, error) {
+
+	// --------------------------------------------
+	// 仮想マシンの一覧を取得
+	// --------------------------------------------
+	vms, err := getVM(client, subscriptionID)
+	if err != nil {
+		return nil, err
+	}
+	// --------------------------------------------
+	// 取得した仮想マシンのメトリックを取得
+	// --------------------------------------------
+	// TODO: 並列で取得
+	var runningVMs []RunningVM
+	for _, elem := range *vms {
+		// 過去1か月1つでもメトリックがある VM を利用している VM とする
+		input := FetchMetricDataInput{
+			subscriptionID:   subscriptionID,
+			namespace:        "microsoft.compute/virtualmachines",
+			resource:         elem.Name,
+			resourceGroup:    elem.ResourceGroup,
+			aggregation:      "Average",
+			metricNames:      []string{"Percentage CPU"},
+			timeDurationHour: 24 * 30,
+		}
+		metricsList, err := FetchMetricData(context.TODO(), client, input)
+		if err != nil {
+			return nil, err
+		}
+
+		// CPU 使用率がない VM はスキップ
+		if len(metricsList["Percentage CPU"]) == 0 {
+			continue
+		}
+		// 1か月全体の平均を算出
+		var avg float64
+		for _, cpu := range metricsList["Percentage CPU"] {
+			avg += *cpu.Average
+		}
+		avg /= float64(len(metricsList["Percentage CPU"]))
+
+		runningVMs = append(runningVMs, RunningVM{VM: elem, PercentageCPUPerMonth: avg})
+	}
+
+	return &runningVMs, nil
+
 }

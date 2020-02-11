@@ -20,6 +20,11 @@ func main() {
 			Usage:  "Advisor for Disk",
 			Action: CheckDisk,
 		},
+		{
+			Name:   "vm",
+			Usage:  "Advisor for VM",
+			Action: CheckVM,
+		},
 	}
 	if err := app.Run(os.Args); err != nil {
 		log.Fatal(err)

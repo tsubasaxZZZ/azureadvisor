@@ -4,8 +4,10 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"sync"
 
 	"github.com/urfave/cli/v2"
+	"golang.org/x/sync/semaphore"
 )
 
 const (
@@ -101,31 +103,54 @@ func getUnusedVMDisks(client *Client, subscriptionID string) (*[]Disk, error) {
 	// --------------------------------------------
 	// 取得した仮想マシンのメトリックを取得
 	// --------------------------------------------
-	// TODO: 並列で取得
+	mutex := &sync.Mutex{}
 	unusedVMID := []string{}
-	for _, elem := range *vms {
-		input := FetchMetricDataInput{
-			subscriptionID:   subscriptionID,
-			namespace:        "microsoft.compute/virtualmachines",
-			resource:         elem.Name,
-			resourceGroup:    elem.ResourceGroup,
-			aggregation:      "Average",
-			metricNames:      []string{"Percentage CPU"},
-			timeDurationHour: 24 * 30,
-		}
-		metricsList, err := FetchMetricData(context.TODO(), client, input)
-		if err != nil {
-			return nil, err
-		}
 
-		// 1つもメトリックがない VM を使ってない VM とする
-		if len(metricsList["Percentage CPU"]) == 0 {
-			unusedVMID = append(unusedVMID, elem.ID)
-		}
-		// テスト用
-		//unusedVMID = append(unusedVMID, elem.ID)
+	var wg sync.WaitGroup
+
+	s := semaphore.NewWeighted(20)
+	for _, elem := range *vms {
+		wg.Add(1)
+		s.Acquire(context.Background(), 1)
+
+		elem := elem
+
+		go func() error {
+			defer s.Release(1)
+			defer wg.Done()
+
+			fmt.Printf("Processing... get metric:%s\n", elem.Name)
+			input := FetchMetricDataInput{
+				subscriptionID:   subscriptionID,
+				namespace:        "microsoft.compute/virtualmachines",
+				resource:         elem.Name,
+				resourceGroup:    elem.ResourceGroup,
+				aggregation:      "Average",
+				metricNames:      []string{"Percentage CPU"},
+				timeDurationHour: 24 * 30,
+			}
+			metricsList, err := FetchMetricData(context.TODO(), client, input)
+			if err != nil {
+				return err
+			}
+
+			// 1つもメトリックがない VM を使ってない VM とする
+			if len(metricsList["Percentage CPU"]) == 0 {
+				mutex.Lock()
+				unusedVMID = append(unusedVMID, elem.ID)
+				mutex.Unlock()
+			}
+			// テスト用
+			//unusedVMID = append(unusedVMID, elem.ID)
+			return nil
+
+		}()
 
 	}
+
+	wg.Wait()
+
+	fmt.Println(unusedVMID)
 
 	// --------------------------------------------
 	// 使用していない VM の 管理ディスクのID一覧を取得

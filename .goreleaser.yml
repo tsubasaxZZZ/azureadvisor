@@ -5,6 +5,7 @@ before:
   hooks:
     - go get github.com/rakyll/statik
     - go generate
+    - go mod tidy
 builds:
   - main: .
     binary: azureadvisor

@@ -3,7 +3,7 @@ env:
   - GO111MODULE=on
 before:
 hooks:
-  - make
+  - go mod tidy
 builds:
   - main: .
     binary: azureadvisor

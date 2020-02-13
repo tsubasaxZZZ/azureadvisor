@@ -26,12 +26,12 @@ jobs:
       #run: |
       #go get -v -t ./...
 
-      - name: test
-        run: |
-          go env
-          echo $PATH
-          find $GOPATH
-        shell: bash
+      #- name: test
+      #run: |
+      #go env
+      #echo $PATH
+      #find $GOPATH
+      #shell: bash
 
       - name: Build
         run: make build

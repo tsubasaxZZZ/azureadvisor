@@ -3,8 +3,6 @@ env:
   - GO111MODULE=on
 before:
   hooks:
-    - go get github.com/rakyll/statik
-    - go generate
     - go mod tidy
 builds:
   - main: .
@@ -15,6 +13,10 @@ builds:
       - -X main.Revision={{.ShortCommit}}
     env:
       - CGO_ENABLED=0
+    hooks:
+      pre:
+        - go get github.com/rakyll/statik
+        - go generate
 archives:
   - name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
     replacements:

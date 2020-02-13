@@ -1,12 +1,9 @@
 project_name: azureadvisor
 env:
   - GO111MODULE=on
-#before:
-#hooks:
-#- go get github.com/rakyll/statik
-#- go env
-#- go generate
-#- go mod tidy
+before:
+hooks:
+  - make
 builds:
   - main: .
     binary: azureadvisor

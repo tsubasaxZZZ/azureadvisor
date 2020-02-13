@@ -26,8 +26,9 @@ jobs:
 
       - name: test
         run: |
+          go env
           echo $PATH
-          ls -l $GOPATH/bin
+          ls -l /opt/hostedtoolcache/go/1.13.8/x64/bin
         shell: bash
 
       - name: Build

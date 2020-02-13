@@ -22,7 +22,6 @@ jobs:
 
       - name: test
         run: |
-          ls -l $GOPATH/bin
           echo $PATH
         shell: bash
 

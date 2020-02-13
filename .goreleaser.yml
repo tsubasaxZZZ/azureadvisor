@@ -3,10 +3,12 @@ env:
   - GO111MODULE=on
 before:
   hooks:
+    - go get github.com/rakyll/statik
     - go mod tidy
+    - go generate
 builds:
   - main: .
-    binary: git-bump
+    binary: azureadvisor
     ldflags:
       - -s -w
       - -X main.Version={{.Version}}

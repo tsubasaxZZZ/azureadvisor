@@ -66,6 +66,6 @@ func TestDiskOutput(t *testing.T) {
 	m["Data1"] = disks1
 	m["Data2"] = disks2
 
-	outputToHTML(m, "result_disks.html", "disks.html")
+	outputToHTML(m, "result_disks.html", "disks.tmpl.html")
 
 }

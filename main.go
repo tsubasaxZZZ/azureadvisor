@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	QUERY_CONCURRENCY = 10
+	QUERY_CONCURRENCY = 20
 )
 
 func main() {

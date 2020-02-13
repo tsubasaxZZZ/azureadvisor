@@ -61,7 +61,7 @@ func CheckDisk(c *cli.Context) error {
 	m := map[string][]Disk{}
 	m["UnattachedDisks"] = *disks
 	m["UnusedVMDisks"] = *disks2
-	outputToHTML(m, "result_disks.html", "disks.html")
+	outputToHTML(m, "result_disks.html", "disks.tmpl.html")
 	return nil
 }
 

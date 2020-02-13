@@ -1,0 +1,24 @@
+<html>
+
+<body>
+    <h2>Ruuning VM in 1 moth</h2>
+    <table border=1>
+        <tr>
+            <th>Name</th>
+            <th>Resource Group</th>
+            <th>VMSize</th>
+            <th>Avg CPU Percentage/month</th>
+        </tr>
+        {{range $i,$v := .RunningVM}}
+        <tr>
+            <td>{{$v.VM.Name}}</td>
+            <td>{{$v.VM.ResourceGroup}}</td>
+            <td>{{$v.VM.Properties.HardwareProfile.VMSize}}</td>
+            <td>{{$v.PercentageCPUPerMonth}}</td>
+        </tr>
+        {{end}}
+    </table>
+
+</body>
+
+</html>

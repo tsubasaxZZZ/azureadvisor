@@ -3,8 +3,10 @@ package main
 import (
 	"context"
 	"fmt"
+	"sync"
 
 	"github.com/urfave/cli/v2"
+	"golang.org/x/sync/semaphore"
 )
 
 type VM struct {
@@ -55,11 +57,11 @@ func CheckVM(c *cli.Context) error {
 	if err4 != nil {
 		return err4
 	}
-	for _, v := range *vms {
-		fmt.Printf("%s,%s,%s,%s,%f\n", v.VM.ID, v.VM.Name, v.VM.ResourceGroup, v.VM.Properties.HardwareProfile.VMSize, v.PercentageCPUPerMonth)
-	}
 	fmt.Println("---------------------------------------------------------------")
 
+	m := map[string][]RunningVM{}
+	m["RunningVM"] = *vms
+	outputToHTML(m, "result_vms.html", "vms.tmpl.html")
 	return nil
 }
 
@@ -105,35 +107,54 @@ func getRunningVM(client *Client, subscriptionID string) (*[]RunningVM, error) {
 	// --------------------------------------------
 	// TODO: 並列で取得
 	var runningVMs []RunningVM
+
+	var wg sync.WaitGroup
+	mutex := &sync.Mutex{}
+
+	s := semaphore.NewWeighted(QUERY_CONCURRENCY)
+
 	for _, elem := range *vms {
-		// 過去1か月1つでもメトリックがある VM を利用している VM とする
-		input := FetchMetricDataInput{
-			subscriptionID:   subscriptionID,
-			namespace:        "microsoft.compute/virtualmachines",
-			resource:         elem.Name,
-			resourceGroup:    elem.ResourceGroup,
-			aggregation:      "Average",
-			metricNames:      []string{"Percentage CPU"},
-			timeDurationHour: 24 * 30,
-		}
-		metricsList, err := FetchMetricData(context.TODO(), client, input)
-		if err != nil {
-			return nil, err
-		}
+		elem := elem
+		wg.Add(1)
+		s.Acquire(context.Background(), 1)
 
-		// CPU 使用率がない VM はスキップ
-		if len(metricsList["Percentage CPU"]) == 0 {
-			continue
-		}
-		// 1か月全体の平均を算出
-		var avg float64
-		for _, cpu := range metricsList["Percentage CPU"] {
-			avg += *cpu.Average
-		}
-		avg /= float64(len(metricsList["Percentage CPU"]))
+		go func() error {
+			defer s.Release(1)
+			defer wg.Done()
+			// 過去1か月1つでもメトリックがある VM を利用している VM とする
+			input := FetchMetricDataInput{
+				subscriptionID:   subscriptionID,
+				namespace:        "microsoft.compute/virtualmachines",
+				resource:         elem.Name,
+				resourceGroup:    elem.ResourceGroup,
+				aggregation:      "Average",
+				metricNames:      []string{"Percentage CPU"},
+				timeDurationHour: 24 * 30,
+			}
+			fmt.Printf("Processing... get metric:%s\n", elem.Name)
+			metricsList, err := FetchMetricData(context.TODO(), client, input)
+			if err != nil {
+				return err
+			}
 
-		runningVMs = append(runningVMs, RunningVM{VM: elem, PercentageCPUPerMonth: avg})
+			// CPU 使用率がない VM はスキップ
+			if len(metricsList["Percentage CPU"]) == 0 {
+				return nil
+			}
+			// 1か月全体の平均を算出
+			var avg float64
+			for _, cpu := range metricsList["Percentage CPU"] {
+				avg += *cpu.Average
+			}
+			avg /= float64(len(metricsList["Percentage CPU"]))
+
+			mutex.Lock()
+			runningVMs = append(runningVMs, RunningVM{VM: elem, PercentageCPUPerMonth: avg})
+			mutex.Unlock()
+			return nil
+		}()
 	}
+	wg.Wait()
 
 	return &runningVMs, nil
 

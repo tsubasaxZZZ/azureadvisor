@@ -2,7 +2,7 @@ export GO111MODULE=on
 
 .PHONY: build
 build:
-    go get -v -t ./...
+	go get github.com/rakyll/statik
 	go generate
 	go build -v .
 	GOOS=windows GOARCH=amd64 go build -v .

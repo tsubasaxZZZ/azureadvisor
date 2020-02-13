@@ -10,7 +10,8 @@ import (
 )
 
 const (
-	QUERY_CONCURRENCY = 20
+	// QueryConcurrency is number of query concurrency
+	QueryConcurrency = 20
 )
 
 func main() {
@@ -28,6 +29,11 @@ func main() {
 			Name:   "vm",
 			Usage:  "Advisor for VM",
 			Action: CheckVM,
+		},
+		{
+			Name:   "hdinsight",
+			Usage:  "Advisor for HDInsight",
+			Action: CheckHDInsight,
 		},
 	}
 	app.Flags = []cli.Flag{

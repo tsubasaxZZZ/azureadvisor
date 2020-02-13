@@ -105,13 +105,12 @@ func getRunningVM(client *Client, subscriptionID string) (*[]RunningVM, error) {
 	// --------------------------------------------
 	// 取得した仮想マシンのメトリックを取得
 	// --------------------------------------------
-	// TODO: 並列で取得
 	var runningVMs []RunningVM
 
 	var wg sync.WaitGroup
 	mutex := &sync.Mutex{}
 
-	s := semaphore.NewWeighted(QUERY_CONCURRENCY)
+	s := semaphore.NewWeighted(QueryConcurrency)
 
 	for _, elem := range *vms {
 		elem := elem

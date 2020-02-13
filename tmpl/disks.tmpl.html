@@ -1,9 +1,11 @@
 <html>
 
 <body>
+    {{template "information" .}}
     <h2>Unattached Disks</h2>
     <table border=1>
         <tr>
+            <th>No</th>
             <th>Resource Group</th>
             <th>Location</th>
             <th>Name</th>
@@ -12,8 +14,9 @@
             <th>DiskState</th>
             <th>TimeCreated</th>
         </tr>
-        {{range $i,$v := .UnattachedDisks}}
+        {{range $i,$v := .Data.UnattachedDisks}}
         <tr>
+            <td>{{add $i 1}}</td>
             <td>{{$v.ResourceGroup}}</td>
             <td>{{$v.Location}}</td>
             <td>{{$v.Name}}</td>
@@ -28,6 +31,7 @@
     <h2>Unused VM's Disks</h2>
     <table border=1>
         <tr>
+            <th>No</th>
             <th>Resource Group</th>
             <th>Location</th>
             <th>Name</th>
@@ -36,8 +40,9 @@
             <th>DiskState</th>
             <th>TimeCreated</th>
         </tr>
-        {{range $i,$v := .UnusedVMDisks}}
+        {{range $i,$v := .Data.UnusedVMDisks}}
         <tr>
+            <td>{{add $i 1}}</td>
             <td>{{$v.ResourceGroup}}</td>
             <td>{{$v.Location}}</td>
             <td>{{$v.Name}}</td>

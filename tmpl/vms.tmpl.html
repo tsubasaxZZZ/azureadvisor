@@ -1,20 +1,23 @@
 <html>
 
 <body>
-    <h2>Ruuning VM in 1 moth</h2>
+    {{template "information" .}}
+    <h2>Ruuning VM</h2>
     <table border=1>
         <tr>
+            <th>No</th>
             <th>Name</th>
             <th>Resource Group</th>
             <th>VMSize</th>
             <th>Avg CPU Percentage/month</th>
         </tr>
-        {{range $i,$v := .RunningVM}}
+        {{range $i,$v := .Data.RunningVM}}
         <tr>
+            <th>{{add $i 1}}</th>
             <td>{{$v.VM.Name}}</td>
             <td>{{$v.VM.ResourceGroup}}</td>
             <td>{{$v.VM.Properties.HardwareProfile.VMSize}}</td>
-            <td>{{$v.PercentageCPUPerMonth}}</td>
+            <td>{{printf "%.1f" $v.PercentageCPUPerMonth}}</td>
         </tr>
         {{end}}
     </table>

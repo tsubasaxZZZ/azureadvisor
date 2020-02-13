@@ -112,7 +112,7 @@ func getUnusedVMDisks(client *Client, subscriptionID string) (*[]Disk, error) {
 
 	var wg sync.WaitGroup
 
-	s := semaphore.NewWeighted(QUERY_CONCURRENCY)
+	s := semaphore.NewWeighted(QueryConcurrency)
 	for _, elem := range *vms {
 		wg.Add(1)
 		s.Acquire(context.Background(), 1)
@@ -209,7 +209,7 @@ func getUnusedVMDisks(client *Client, subscriptionID string) (*[]Disk, error) {
 
 	mutex2 := &sync.Mutex{}
 	var wg2 sync.WaitGroup
-	s2 := semaphore.NewWeighted(QUERY_CONCURRENCY)
+	s2 := semaphore.NewWeighted(QueryConcurrency)
 
 	// 一度に大量のクエリをすると制限があるため1クエリ当たりのディスク数の最大値を決める
 	const QUERYNUM = 10

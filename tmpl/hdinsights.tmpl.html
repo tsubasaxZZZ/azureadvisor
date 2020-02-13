@@ -1,0 +1,39 @@
+<html>
+
+<body>
+    {{template "information" .}}
+    <h2>Unused HDInsight</h2>
+    <table border=1>
+        <tr>
+            <th>No</th>
+            <th>Name</th>
+            <th>Resource Group</th>
+            <th>Kind</th>
+            <th>Node</th>
+            <th>CreatedDate</th>
+        </tr>
+        {{range $i,$v := .Data.UnusedHDInsight}}
+        <tr>
+            <th>{{add $i 1}}</th>
+            <td>{{$v.Name}}</td>
+            <td>{{$v.ResourceGroup}}</td>
+            <td>{{$v.Properties.ClusterDefinition.Kind}}</td>
+            <td>
+                <ul>
+                    {{range $j,$r := .Properties.ComputeProfile.Roles}}
+                    <li>
+                        {{$r.Name}} - {{$r.HardwareProfile.VMSize}}({{$r.TargetInstanceCount}})
+                    </li>
+                    {{end}}
+                </ul>
+            </td>
+            <td>
+                {{$v.Properties.CreatedDate}}
+            </td>
+        </tr>
+        {{end}}
+    </table>
+
+</body>
+
+</html>

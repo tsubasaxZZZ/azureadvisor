@@ -1,8 +1,13 @@
+<!DOCTYPE html>
 <html>
+
+<head>
+    {{template "header"}}
+</head>
 
 <body>
     {{template "information" .}}
-    <h2>Unused HDInsight</h2>
+    <h1>Unused HDInsight</h1>
     <table border=1>
         <tr>
             <th>No</th>
@@ -19,13 +24,9 @@
             <td>{{$v.ResourceGroup}}</td>
             <td>{{$v.Properties.ClusterDefinition.Kind}}</td>
             <td>
-                <ul>
-                    {{range $j,$r := .Properties.ComputeProfile.Roles}}
-                    <li>
-                        {{$r.Name}} - {{$r.HardwareProfile.VMSize}}({{$r.TargetInstanceCount}})
-                    </li>
-                    {{end}}
-                </ul>
+                {{range $j,$r := .Properties.ComputeProfile.Roles}}
+                <span>+ {{$r.Name}} - {{$r.HardwareProfile.VMSize}}({{$r.TargetInstanceCount}})</span><br>
+                {{end}}
             </td>
             <td>
                 {{$v.Properties.CreatedDate}}

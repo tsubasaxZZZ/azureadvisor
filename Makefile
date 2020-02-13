@@ -4,6 +4,7 @@ export GO111MODULE=on
 build:
 	go generate
 	go build -v .
+	GOOS=windows GOARCH=amd64 go build -v .
 
 .PHONY: test
 test: ## go test

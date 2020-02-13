@@ -3,7 +3,6 @@ package main
 import (
 	"io/ioutil"
 	"os"
-	"path/filepath"
 	"text/template"
 	"time"
 
@@ -27,7 +26,7 @@ func outputToHTML(data interface{}, outpuFilePath string, templateName string) e
 	}
 
 	// ----- コンテンツテンプレート
-	templateFile, err := statikFs.Open(filepath.Join("/", templateName))
+	templateFile, err := statikFs.Open("/" + templateName)
 	if err != nil {
 		return err
 	}
@@ -37,8 +36,19 @@ func outputToHTML(data interface{}, outpuFilePath string, templateName string) e
 	}
 	// --------------
 
+	// ----- ヘッダーテンプレート
+	headerTemplateFile, err := statikFs.Open("/header.tmpl.html")
+	if err != nil {
+		return err
+	}
+	headerTemplateBytes, err := ioutil.ReadAll(headerTemplateFile)
+	if err != nil {
+		return err
+	}
+	// --------------
+
 	// ----- 共通テンプレート
-	infoTemplateFile, err := statikFs.Open(filepath.Join("/", "information.tmpl.html"))
+	infoTemplateFile, err := statikFs.Open("/information.tmpl.html")
 	if err != nil {
 		return err
 	}
@@ -55,7 +65,9 @@ func outputToHTML(data interface{}, outpuFilePath string, templateName string) e
 	}
 	tpl := template.Must(template.New(templateName).Funcs(funcs).Parse(string(templateBytes)))
 	tplInformation := template.Must(template.New("information").Funcs(funcs).Parse(string(infoTemplateBytes)))
+	tplHeader := template.Must(template.New("information").Funcs(funcs).Parse(string(headerTemplateBytes)))
 	tpl.AddParseTree("information", tplInformation.Tree)
+	tpl.AddParseTree("header", tplHeader.Tree)
 
 	info := map[string]interface{}{
 		"createdDate": time.Now().Format("2006-01-02 15:04:05"),

@@ -3,6 +3,7 @@ env:
   - GO111MODULE=on
 before:
   hooks:
+    - go generate
     - go mod tidy
 builds:
   - main: .

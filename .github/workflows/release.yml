@@ -21,13 +21,6 @@ jobs:
           echo "::add-path::$(go env GOPATH)/bin"
           go get github.com/rakyll/statik
         shell: bash
-      - name: chack env
-        run: |
-          ls -l $GOPATH/bin
-          echo Find1
-          find $GOPATH
-          echo $PATH
-
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v1
         with:

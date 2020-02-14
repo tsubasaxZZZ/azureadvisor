@@ -48,3 +48,7 @@ Please see sample directory.
 
 ## Image
 ![image](sample/s1.png)
+
+# Thanks
+The part of this tool that gets metrics is based on "azmon".
+https://github.com/heartbeatsjp/azmon

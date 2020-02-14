@@ -45,3 +45,6 @@ GLOBAL OPTIONS:
 
 # Sample
 Please see sample directory.
+
+## Image
+![image](sample/s1.png)

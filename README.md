@@ -16,6 +16,8 @@ Advisor for Azure environment
 - Unused HDInsight cluster - This HDInsight cluster has not had a Gateway Request within one month.
 
 # Usage
+This tool requires Azure CLI and read permission for resources.
+
 ```bash
 # You need login and set target subscription.
 az login

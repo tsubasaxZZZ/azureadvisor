@@ -5,15 +5,20 @@ build:
 	go get github.com/rakyll/statik
 	go generate
 	go build -v .
+	go mod tidy
 	GOOS=windows GOARCH=amd64 go build -v .
 
 .PHONY: test
 test: ## go test
+	go get github.com/rakyll/statik
+	go generate
+	go mod tidy
 	go test -v -cover .
 
 .PHONY: clean
 clean: ## go clean
 	rm -rf ./statik
+	go mod tidy
 	go clean -cache -testcache
 
 .PHONY: analyze

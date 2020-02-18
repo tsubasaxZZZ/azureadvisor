@@ -47,7 +47,8 @@ func CheckHDInsight(c *cli.Context) error {
 	}
 	fmt.Println("---------------------------------------------------------------")
 
-	outputToHTML(map[string][]HDInsight{"UnusedHDInsight": *h}, "result_hdinsight.html", "hdinsights.tmpl.html")
+	outputToFile(map[string][]HDInsight{"UnusedHDInsight": *h}, "result_hdinsight.html", "hdinsights.tmpl.html")
+	outputToFile(*h, "result_hdinsight.csv", "hdinsights.tmpl.csv")
 	return nil
 }
 

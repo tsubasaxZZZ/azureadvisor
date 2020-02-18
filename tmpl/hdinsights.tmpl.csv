@@ -1,0 +1,6 @@
+ResourceGroup,Name,Kind,CreatedDate,NodeType,VMSize,TargetInstanceCount
+{{range $i,$v := .Data -}}
+{{range $j,$r := .Properties.ComputeProfile.Roles -}}
+{{$v.ResourceGroup}},{{$v.Name}},{{$v.Properties.ClusterDefinition.Kind}},{{$v.Properties.CreatedDate}},{{$r.Name}},{{$r.HardwareProfile.VMSize}},{{$r.TargetInstanceCount}}
+{{end -}}
+{{end -}}

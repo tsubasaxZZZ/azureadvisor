@@ -21,7 +21,7 @@
         </tr>
         {{range $i,$v := .Data.UnattachedDisks}}
         <tr>
-            <td>{{add $i 1}}</td>
+            <th>{{add $i 1}}</th>
             <td>{{$v.ResourceGroup}}</td>
             <td>{{$v.Location}}</td>
             <td>{{$v.Name}}</td>

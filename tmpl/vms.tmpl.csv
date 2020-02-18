@@ -1,0 +1,4 @@
+ResourceGroup,Name,VMSize,PercentageCPUPerMonth,PercentageCPUMAXPerMonth
+{{range $i,$v := .Data.RunningVM -}}
+{{$v.VM.ResourceGroup}},{{$v.VM.Name}},{{$v.VM.Properties.HardwareProfile.VMSize}},{{printf "%.1f" $v.PercentageCPUPerMonth}},{{printf "%.1f" $v.PercentageCPUMAXPerMonth}}
+{{end -}}

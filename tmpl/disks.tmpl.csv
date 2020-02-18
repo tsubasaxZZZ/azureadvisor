@@ -1,0 +1,4 @@
+ResourceGroup,Location,Name,SkuName,DiskSizeGB,DiskState,TimeCreated
+{{range $i,$v := .Data -}}
+{{$v.ResourceGroup}},{{$v.Location}},{{$v.Name}},{{$v.Sku.Name}},{{$v.Properties.DiskSizeGB}},{{$v.Properties.DiskState}},{{$v.Properties.TimeCreated}}
+{{end -}}

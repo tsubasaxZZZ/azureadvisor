@@ -62,7 +62,8 @@ func CheckVM(c *cli.Context) error {
 
 	m := map[string][]RunningVM{}
 	m["RunningVM"] = *vms
-	outputToHTML(m, "result_vms.html", "vms.tmpl.html")
+	outputToFile(m, "result_vms.html", "vms.tmpl.html")
+	outputToFile(m, "result_vms.csv", "vms.tmpl.csv")
 	return nil
 }
 

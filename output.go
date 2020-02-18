@@ -3,6 +3,7 @@ package main
 import (
 	"io/ioutil"
 	"os"
+	"strings"
 	"text/template"
 	"time"
 
@@ -13,8 +14,8 @@ import (
 
 //go:generate statik -f -src tmpl
 
-func outputToHTML(data interface{}, outpuFilePath string, templateName string) error {
-	file, err := os.Create(outpuFilePath)
+func outputToFile(data interface{}, outputFilePath string, templateName string) error {
+	file, err := os.Create(outputFilePath)
 	if err != nil {
 		return err
 	}
@@ -36,38 +37,42 @@ func outputToHTML(data interface{}, outpuFilePath string, templateName string) e
 	}
 	// --------------
 
-	// ----- ヘッダーテンプレート
-	headerTemplateFile, err := statikFs.Open("/header.tmpl.html")
-	if err != nil {
-		return err
-	}
-	headerTemplateBytes, err := ioutil.ReadAll(headerTemplateFile)
-	if err != nil {
-		return err
-	}
-	// --------------
-
-	// ----- 共通テンプレート
-	infoTemplateFile, err := statikFs.Open("/information.tmpl.html")
-	if err != nil {
-		return err
-	}
-	infoTemplateBytes, err := ioutil.ReadAll(infoTemplateFile)
-	if err != nil {
-		return err
-	}
-	// --------------
-
 	funcs := template.FuncMap{
 		"add": func(x, y int) int {
 			return x + y
 		},
 	}
 	tpl := template.Must(template.New(templateName).Funcs(funcs).Parse(string(templateBytes)))
-	tplInformation := template.Must(template.New("information").Funcs(funcs).Parse(string(infoTemplateBytes)))
-	tplHeader := template.Must(template.New("information").Funcs(funcs).Parse(string(headerTemplateBytes)))
-	tpl.AddParseTree("information", tplInformation.Tree)
-	tpl.AddParseTree("header", tplHeader.Tree)
+
+	// HTML テンプレートを指定された場合
+	if strings.Index(templateName, ".html") > -1 {
+
+		// ----- ヘッダーテンプレート
+		headerTemplateFile, err := statikFs.Open("/header.tmpl.html")
+		if err != nil {
+			return err
+		}
+		headerTemplateBytes, err := ioutil.ReadAll(headerTemplateFile)
+		if err != nil {
+			return err
+		}
+		// --------------
+
+		// ----- 共通テンプレート
+		infoTemplateFile, err := statikFs.Open("/information.tmpl.html")
+		if err != nil {
+			return err
+		}
+		infoTemplateBytes, err := ioutil.ReadAll(infoTemplateFile)
+		if err != nil {
+			return err
+		}
+		// --------------
+		tplInformation := template.Must(template.New("information").Funcs(funcs).Parse(string(infoTemplateBytes)))
+		tplHeader := template.Must(template.New("information").Funcs(funcs).Parse(string(headerTemplateBytes)))
+		tpl.AddParseTree("information", tplInformation.Tree)
+		tpl.AddParseTree("header", tplHeader.Tree)
+	}
 
 	info := map[string]interface{}{
 		"createdDate": time.Now().Format("2006-01-02 15:04:05"),

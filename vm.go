@@ -43,8 +43,9 @@ type OSDisk struct {
 }
 
 type RunningVM struct {
-	VM                    VM
-	PercentageCPUPerMonth float64
+	VM                       VM
+	PercentageCPUPerMonth    float64
+	PercentageCPUMAXPerMonth float64
 }
 
 func CheckVM(c *cli.Context) error {
@@ -130,7 +131,7 @@ func getRunningVM(client *Client, subscriptionID string) (*[]RunningVM, error) {
 				metricNames:      []string{"Percentage CPU"},
 				timeDurationHour: 24 * 30,
 			}
-			fmt.Printf("Processing... get metric:%s\n", elem.Name)
+			fmt.Printf("Processing... get vm metric:Average:%s\n", elem.Name)
 			metricsList, err := FetchMetricData(context.TODO(), client, input)
 			if err != nil {
 				return err
@@ -147,8 +148,31 @@ func getRunningVM(client *Client, subscriptionID string) (*[]RunningVM, error) {
 			}
 			avg /= float64(len(metricsList["Percentage CPU"]))
 
+			// 1か月間の内の最大CPU使用率を取得
+			// ToDo: メトリックのアグリゲーションを一度に取得する
+			var max float64
+			input = FetchMetricDataInput{
+				subscriptionID:   subscriptionID,
+				namespace:        "microsoft.compute/virtualmachines",
+				resource:         elem.Name,
+				resourceGroup:    elem.ResourceGroup,
+				aggregation:      "Maximum",
+				metricNames:      []string{"Percentage CPU"},
+				timeDurationHour: 24 * 30,
+			}
+			fmt.Printf("Processing... get vm metric:Maximum:%s\n", elem.Name)
+			metricsList, err = FetchMetricData(context.TODO(), client, input)
+			if err != nil {
+				return err
+			}
+			for _, cpu := range metricsList["Percentage CPU"] {
+				if max < *cpu.Maximum {
+					max = *cpu.Maximum
+				}
+			}
+
 			mutex.Lock()
-			runningVMs = append(runningVMs, RunningVM{VM: elem, PercentageCPUPerMonth: avg})
+			runningVMs = append(runningVMs, RunningVM{VM: elem, PercentageCPUPerMonth: avg, PercentageCPUMAXPerMonth: max})
 			mutex.Unlock()
 			return nil
 		}()

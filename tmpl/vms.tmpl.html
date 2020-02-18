@@ -15,6 +15,7 @@
             <th>Resource Group</th>
             <th>VMSize</th>
             <th>Avg CPU Percentage/month</th>
+            <th>Max CPU Percentage/month</th>
         </tr>
         {{range $i,$v := .Data.RunningVM}}
         <tr>
@@ -23,6 +24,7 @@
             <td>{{$v.VM.ResourceGroup}}</td>
             <td>{{$v.VM.Properties.HardwareProfile.VMSize}}</td>
             <td>{{printf "%.1f" $v.PercentageCPUPerMonth}}</td>
+            <td>{{printf "%.1f" $v.PercentageCPUMAXPerMonth}}</td>
         </tr>
         {{end}}
     </table>

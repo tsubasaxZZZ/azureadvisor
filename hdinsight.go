@@ -113,7 +113,7 @@ func getUnusedCluster(client *Client, subscriptionID string) (*[]HDInsight, erro
 				namespace:        "microsoft.hdinsight/clusters",
 				resource:         elem.Name,
 				resourceGroup:    elem.ResourceGroup,
-				aggregation:      "Average",
+				aggregation:      "Total",
 				metricNames:      []string{"GatewayRequests"},
 				timeDurationHour: 24 * 30,
 			}
@@ -127,12 +127,6 @@ func getUnusedCluster(client *Client, subscriptionID string) (*[]HDInsight, erro
 			if len(metricsList["GatewayRequests"]) > 0 {
 				return nil
 			}
-			// 1か月全体の平均を算出
-			var avg float64
-			for _, gr := range metricsList["GatewayRequests"] {
-				avg += *gr.Average
-			}
-			avg /= float64(len(metricsList["GatewayRequests"]))
 
 			mutex.Lock()
 			unusedHDInsight = append(unusedHDInsight, elem)
